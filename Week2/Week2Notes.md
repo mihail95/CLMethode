@@ -15,6 +15,9 @@ Always measuring worst case
 #### $O(n^2)$ Algorithms:
 * Soooooooooooooo slow
 
+    **Examples:**  
+    Insertion sort - Go thorugh array, check if current < last recursively
+
 #### $O(n)$ Algorithms:
 * *Worst case*: n-Operations
 
@@ -24,13 +27,15 @@ Always measuring worst case
 
 #### $O(\sqrt n)$ Algorithms:
 
-#### $O(log n)$ Algorithms:
+#### $O(log\ n)$ Algorithms:
+* Inverse of $O(2^n)$
+
+    **Examples:**  
+    Binary search
 
 #### $O(1)$ Algorithms:
 * Always constant time
 
     **Examples:**  
     Insertion (Retrieval) in a hash table
-### Quadratic Complexity
-### Logarithmic Complexity
 
