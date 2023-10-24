@@ -1,6 +1,6 @@
 # Methoden der Computerlinguistik 
 Read (Cap. 2 - Nachholung): https://web.stanford.edu/~jurafsky/slp3/2.pdf
-
+Read (Cap 3 - Hausaufgabe): https://web.stanford.edu/~jurafsky/slp3/3.pdf
 
 ## Lecture 2 - Time Complexity
 ### Big O Notation
@@ -39,3 +39,4 @@ Always measuring worst case
     **Examples:**  
     Insertion (Retrieval) in a hash table
 
+### Levenshtein Distance
