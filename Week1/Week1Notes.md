@@ -1,4 +1,5 @@
 # Methoden der Computerlinguistik 
+Book: https://web.stanford.edu/~jurafsky/slp3/2.pdf
 
 ## Lecture 1
 ### Ziele

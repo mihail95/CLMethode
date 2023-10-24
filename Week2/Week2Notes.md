@@ -1,9 +1,36 @@
 # Methoden der Computerlinguistik 
+Read (Cap. 2 - Nachholung): https://web.stanford.edu/~jurafsky/slp3/2.pdf
 
-## Lecture 1
-### Ziele
-1. Generierung
-2. Klasifikation
-3. Sprachverstehen
-4. Summaries
+
+## Lecture 2 - Time Complexity
+### Big O Notation
+Measure scaling with dataset size\
+Always measuring worst case
+#### $O(n!)$ Algorithms:
+* Slowest
+
+#### $O(2^n)$ Algorithms:
+* Very very slow
+
+#### $O(n^2)$ Algorithms:
+* Soooooooooooooo slow
+
+#### $O(n)$ Algorithms:
+* *Worst case*: n-Operations
+
+    **Examples:**  
+    Go through array and check each number\
+    Find maximum in set of data (itterating through all members)
+
+#### $O(\sqrt n)$ Algorithms:
+
+#### $O(log n)$ Algorithms:
+
+#### $O(1)$ Algorithms:
+* Always constant time
+
+    **Examples:**  
+    Insertion (Retrieval) in a hash table
+### Quadratic Complexity
+### Logarithmic Complexity
 
