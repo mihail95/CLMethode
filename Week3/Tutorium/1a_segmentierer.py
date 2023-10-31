@@ -23,6 +23,13 @@ import re
 ###############################################
 
 ###############################################
+# Prints the text in a line by line format
+###############################################
+def show_text(textArray):
+    for sentence in textArray:
+        print(sentence)
+
+###############################################
 # Builds an abbrevialtion lexicon
 ###############################################
 def build_abbrev_lex(input):
@@ -37,12 +44,16 @@ def build_abbrev_lex(input):
 def remove_abrreviations(input, lexicon):
     textWithoutAbbr = []
     for line in input:
+        # This works, but it's very content-specific:
+        # Looks if the current token contains a "." and is followed by a non-capitalized word OR is shorter than 5 letters
+        # Then adds that entry to the abbr. lexicon
         for (idx, token) in enumerate(line.split()):
             if ("." in token and not line.split()[idx+1][0].isupper()):
                 lexicon.append(token)
             elif("." in token and len(token)<=5):
                 lexicon.append(token)
-                
+            
+            # Swaps the abbreviation for its index in the abbr. array
             if token in lexicon:
                 token = '#AbbrevN' + str(lexicon.index(token)) + '#'
             textWithoutAbbr.append(token)
@@ -50,13 +61,14 @@ def remove_abrreviations(input, lexicon):
     return (' '.join(textWithoutAbbr), lexicon)
 
 ###############################################
-# Nimmt den bearbeiteten und splittet ihm in Sätze.
+# Splits the text in sentences
 ###############################################
 def split_sentences(input):
     output = []
     currentSentence = ''
     for word in input.split():
         currentSentence += word + ' '
+        # Searches for a sentence-end mark, not surrounded by quotes
         if (("." in word or "?" in word or "!" in word) and '"' not in word):
             output.append(currentSentence)
             currentSentence = ''
@@ -64,7 +76,7 @@ def split_sentences(input):
     return output
 
 ###############################################
-# Nimmt den bearbeiteten Text als inuput und ersetzt alle abbr. Indexes durch den Abbrev.
+# Swaps all of the abbreviation Indexes for their text counterparts from the abbr. list
 ###############################################
 def add_abbreviations(input, lexicon):
     newTextArray = []
@@ -93,7 +105,7 @@ def run_script(input_text, input_lex):
     splitSentencesArray = split_sentences(processedText)
     finalText = add_abbreviations(splitSentencesArray, abbreviationLexicon)
 
-    print(finalText)
+    show_text(finalText)
     
         
 
