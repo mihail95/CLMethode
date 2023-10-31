@@ -46,9 +46,9 @@ def initialize_matrix(dimensions):
 def calculate_costs(source, target, dimensions, costMatrix):
     for rowIndex in range(1, dimensions[0]+1):
         for colIndex in range(1, dimensions[1]+1):
-            delCost = costMatrix[rowIndex-1][colIndex]+1
+            delCost = costMatrix[rowIndex-1][colIndex]+1 # Item Above + 1 (delCost)
             subCost = costMatrix[rowIndex-1][colIndex-1]+(0 if source[rowIndex-1] == target[colIndex-1] else 2)
-            insCost = costMatrix[rowIndex][colIndex-1]+1
+            insCost = costMatrix[rowIndex][colIndex-1]+1 # Item to the Left + 1 (insCost)
             costMatrix[rowIndex][colIndex] = min(delCost,subCost,insCost)
     return costMatrix
 
@@ -62,7 +62,6 @@ def run_script(source:str, target:str) -> None:
     costMatrix = calculate_costs(source, target, dimensions, costMatrix)
     show_matrix(costMatrix)
     print(f"\nLevenstein Distance: {costMatrix[dimensions[0]][dimensions[1]]}")
-    ...
 
 ###########################################################
 # Hauptprogramm
