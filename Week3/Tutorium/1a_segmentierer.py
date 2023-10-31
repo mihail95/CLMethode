@@ -38,13 +38,12 @@ def remove_abrreviations(input, lexicon):
     textWithoutAbbr = []
     for line in input:
         for (idx, token) in enumerate(line.split()):
-            if token in lexicon:
-                token = '#AbbrevN' + str(lexicon.index(token)) + '#'
-            elif ("." in token and not line.split()[idx+1][0].isupper()):
+            if ("." in token and not line.split()[idx+1][0].isupper()):
                 lexicon.append(token)
-                token = '#AbbrevN' + str(lexicon.index(token)) + '#'
             elif("." in token and len(token)<=5):
                 lexicon.append(token)
+                
+            if token in lexicon:
                 token = '#AbbrevN' + str(lexicon.index(token)) + '#'
             textWithoutAbbr.append(token)
     
