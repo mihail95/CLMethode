@@ -16,6 +16,7 @@ Als Hilfsmittel kann das Abkuerzungslexikon 'abbrev.lex' eingesetzt werden.
 Nutzen Sie das vorgegebene Programmgerüst und teilen Sie Ihr Programm sinnvoll in Funktionen auf.
 
 """
+import re
 
 ###############################################
 # FUNKTIONEN
@@ -36,12 +37,18 @@ def build_abbrev_lex(input):
 def remove_abrreviations(input, lexicon):
     textWithoutAbbr = []
     for line in input:
-        for token in line.split():
+        for (idx, token) in enumerate(line.split()):
             if token in lexicon:
+                token = '#AbbrevN' + str(lexicon.index(token)) + '#'
+            elif ("." in token and not line.split()[idx+1][0].isupper()):
+                lexicon.append(token)
+                token = '#AbbrevN' + str(lexicon.index(token)) + '#'
+            elif("." in token and len(token)<=5):
+                lexicon.append(token)
                 token = '#AbbrevN' + str(lexicon.index(token)) + '#'
             textWithoutAbbr.append(token)
     
-    return ' '.join(textWithoutAbbr)
+    return (' '.join(textWithoutAbbr), lexicon)
 
 ###############################################
 # Nimmt den bearbeiteten und splittet ihm in Sätze.
@@ -54,15 +61,24 @@ def split_sentences(input):
         if (("." in word or "?" in word or "!" in word) and '"' not in word):
             output.append(currentSentence)
             currentSentence = ''
-
-    print(output)
+    
+    return output
 
 ###############################################
 # Nimmt den bearbeiteten Text als inuput und ersetzt alle abbr. Indexes durch den Abbrev.
 ###############################################
 def add_abbreviations(input, lexicon):
-    ...
+    newTextArray = []
+    for sentence in input:
+        newSentence = ''
+        for token in sentence.split():
+            res = re.search(r"#AbbrevN(\d+)#", token)
+            if (res != None):
+                token = lexicon[int(res.group(1))]
+            newSentence += token + ' '
+        newTextArray.append(newSentence)
 
+    return newTextArray
 
 
 ##############################################
@@ -73,11 +89,12 @@ def run_script(input_text, input_lex):
         abbreviationLexicon = build_abbrev_lex(input)
 
     with open(input_text, encoding="utf-8") as input:
-        processedText = remove_abrreviations(input, abbreviationLexicon)
+        processedText, abbreviationLexicon = remove_abrreviations(input, abbreviationLexicon)
 
     splitSentencesArray = split_sentences(processedText)
+    finalText = add_abbreviations(splitSentencesArray, abbreviationLexicon)
 
-    pass
+    print(finalText)
     
         
 
