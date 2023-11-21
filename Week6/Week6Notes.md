@@ -77,8 +77,8 @@ denominator is the sum of all positive words\
 $V$ is an union of all the word types in all classes
 $$\hat{P}(w_i|c) = \frac{count(w_i, c)}{\sum_{w\in V}{count(w,c)}}$$
 
-3. Laplace Smoothing (or $\alpha$) to avoid Zero-Probabilities (causing a class probability of 0)
-$$\hat{P}(w_i|c) = \frac{count(w_i, c) + 1}{(\sum_{w\in V}{count(w,c)}) + |V|}$$
+3. Laplace Smoothing ($\alpha = 1$ per default) to avoid Zero-Probabilities (causing a class probability of 0)
+$$\hat{P}(w_i|c) = \frac{count(w_i, c) + \alpha}{(\sum_{w\in V}{count(w,c)}) + \alpha\cdot|V|}$$
 
 4. Ignore **unknown words**; Remove them from the test document
 
