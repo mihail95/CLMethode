@@ -42,7 +42,7 @@ class NBModel:
                 self.likelihoods[word][c] = 0
                 for instance in instances:
                     self.likelihoods[word][c] += instance.count(word)
-                self.likelihoods[word][c] = (self.likelihoods[word][c] + self.alpha) / (wordCounts[c] + len(self.vocabulary))
+                self.likelihoods[word][c] = (self.likelihoods[word][c] + self.alpha) / (wordCounts[c] + (self.alpha* len(self.vocabulary)))
 
     def get_max(self, sums:dict) -> str:
         classMax = ""
