@@ -46,7 +46,7 @@ class NBModel:
 
     def get_max(self, sums:dict) -> str:
         classMax = ""
-        currentMax = 0
+        currentMax = -1
         for (c, value) in sums.items():
             if value > currentMax:
                 classMax = c
