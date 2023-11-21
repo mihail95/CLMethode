@@ -12,6 +12,7 @@ Uses include:
 
 ## Bayes' theorem
 $$P(A)\cdot P(B|A) = P(A\cap B) = P(B)\cdot P(A|B)$$
+
 $$P(A|B) = P_B(A) = \frac{P(A)\cdot P(B|A)}{P(B)} = \frac{P(A\cap B)}{P(B)}$$
 
 
