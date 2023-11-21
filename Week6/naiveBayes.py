@@ -68,7 +68,8 @@ class NBModel:
 # Funktion, die alle weiteren Funktionen aufruft
 
 def run_script() -> None:
-    classes = ["positive", "negative"]
+    # classes = ["positive", "negative"]
+    classes = ["action", "comedy"]
     naiveBayesModel = NBModel()
 
     for c in classes:
@@ -77,7 +78,7 @@ def run_script() -> None:
             naiveBayesModel.set_data(c, file)
     
     naiveBayesModel.train_model()
-    sentenceToPredict = "predictable with no fun"
+    sentenceToPredict = "fast couple shoot fly"
     print(f"\"{sentenceToPredict}\" is from class: {naiveBayesModel.predict_class(sentenceToPredict)}")
 
 
