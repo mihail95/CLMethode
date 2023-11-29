@@ -47,7 +47,7 @@ class NBModel:
             if not self.log:
                 self.priorProbs[className] = classNum[className] / docNum
             else: 
-                self.priorProbs[className] = math.log(classNum[className] / docNum)
+                self.priorProbs[className] = math.log10(classNum[className] / docNum)
 
         # Set our word counts given a class
         for word in self.vocabulary:
@@ -61,7 +61,7 @@ class NBModel:
                 if not self.log: 
                     self.likelihoods[word][className] = (self.likelihoods[word][className] + self.alpha) / (wordCounts[className] + (self.alpha * len(self.vocabulary)))
                 else:
-                    self.likelihoods[word][className] = math.log((self.likelihoods[word][className] + self.alpha) / (wordCounts[className] + (self.alpha * len(self.vocabulary))))
+                    self.likelihoods[word][className] = math.log10((self.likelihoods[word][className] + self.alpha) / (wordCounts[className] + (self.alpha * len(self.vocabulary))))
 
 
     def get_max(self, sums:dict) -> str:
