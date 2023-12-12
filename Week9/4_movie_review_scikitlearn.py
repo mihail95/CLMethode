@@ -95,19 +95,19 @@ def prepare_data(data, lexicon):
 
     return preparedData
 
-def count_word_sentiments(data, lexicon, sentimentType):
+def count_word_sentiments(series, lexicon, sentimentType):
     ...
 
-def determine_contains_no(data):
+def determine_contains_no(series):
     ...
 
-def count_pronouns(data):
+def count_pronouns(series):
     ...
 
-def determine_contains_exclam(data):
+def determine_contains_exclam(series):
     ...
 
-def count_tokens(data):
+def count_tokens(series):
     ...
 
 def evaluate_LRModel(data, lexicon):
