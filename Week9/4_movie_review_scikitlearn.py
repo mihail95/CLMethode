@@ -33,14 +33,16 @@ movie_reviews_10k.csv: die ersten 10.000 Einträge aus diesem Datensatz: https:/
 WKWSCISentimentLexicon_v1.1.xlsx: https://researchdata.ntu.edu.sg/dataset.xhtml?persistentId=doi:10.21979/N9/DWWEBV
 """
 from pathlib import Path
-import nltk
-import sklearn
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
+from nltk.tokenize import word_tokenize
 import pandas as pd
+import math
+import re
+import time
 
 ################################
 # Funktionen
@@ -78,46 +80,68 @@ def evaluate_NBModel(data):
     return NBAccuracy
 
 
-def prepare_data(data, lexicon):
+def prepare_data(data:pd.DataFrame, lexicon:pd.DataFrame):
     """Calculate the needed features and write them to the provided dataframe"""
+    # Filter the lexicon to create two lists of words
+    positiveWords = lexicon[lexicon['sentiment'] > 0]['term'].astype(str).tolist()
+    negativeWords = lexicon[lexicon['sentiment'] < 0]['term'].astype(str).tolist()
 
-    # Create an empty data frame with our needed column names (not sure if needed)
-    preparedData = pd.DataFrame(columns = ['sentiment', 'pos_count', 'neg_count', 'contains_no', 'pron_count', 'contains_exclam', 'token_log'])
+    # Create columns for our features 'pos_count', 'neg_count', 'contains_no', 'pron_count', 'contains_exclam', 'token_log'
+    # The values get calculated by the applied function
+    # apply() maps a function to all the members of the vector (the pd.Series object)
 
-    # Calculate our features (hopefully works without having to itterate over the DF rows) 
-    preparedData['sentiment'] = data['sentiment']
-    preparedData['pos_count'] = count_word_sentiments(data['review'], lexicon, sentimentType = 'positive')
-    preparedData['neg_count'] = count_word_sentiments(data['review'], lexicon, sentimentType = 'negative')
-    preparedData['contains_no'] = determine_contains_no(data['review'])
-    preparedData['pron_count'] = count_pronouns(data['review'])
-    preparedData['contains_exclam'] = determine_contains_exclam(data['review'])
-    preparedData['token_log'] = count_tokens(data['review'])
+    # This takes around 2-3 Minutes on my hardware
+    data['pos_count'] = data['review'].apply(count_sentiments, args=(positiveWords,))
+    # This takes around 4-5 Minutes on my hardware
+    data['neg_count'] = data['review'].apply(count_sentiments, args=(negativeWords,))
+    data['contains_no'] = data['review'].apply(determine_contains_no)
+    data['pron_count'] = data['review'].apply(count_pronouns)
+    data['contains_exclam'] = data['review'].apply(determine_contains_exclam)
+    data['token_log'] = data['review'].apply(count_tokens)
 
-    return preparedData
+    return data
 
-def count_word_sentiments(series, lexicon, sentimentType):
+def count_sentiments(document, words):
+    """Counts all positive sentiment word occurences in the document"""
+    # Regex magic (courtesy of https://stackoverflow.com/questions/60129620/finding-all-occurrences-of-a-list-of-words-in-a-text-using-regex-by-trying-to-jo)
+    sentimentSum = len(re.findall(r'\b(?:' + '|'.join(words) + r')\b', document))
+
+    return sentimentSum
+
+
+def determine_contains_no(document):
+    """Checks if the document contains the string 'no'"""
+    stringsToSearch = ['no', 'No']
+    for string in stringsToSearch:
+        if re.search(r'\b' + string + r'\b', document):
+            return 1
+        else: return 0
+
+
+def count_pronouns(document):
+    """Counts all occurences of 1st and 2nd Person pronouns in the document"""
+
     ...
 
-def determine_contains_no(series):
-    ...
+def determine_contains_exclam(document):
+    """Checks if the document contains the string '!'"""
+    # Cast to an int to return 1 or 0
+    return int('!' in document)
 
-def count_pronouns(series):
-    ...
-
-def determine_contains_exclam(series):
-    ...
-
-def count_tokens(series):
-    ...
+def count_tokens(document):
+    """Returns log10 of the token count in the current document"""
+    return math.log10(len(word_tokenize(document)))
 
 def evaluate_LRModel(data, lexicon):
     """
     Evaluates a Linear Regression Model using the given dataframe\\
     Returns the accuracy of the trained LRModel
     """
-    
+    t0 = time.time()
+    print(f"Begin @{t0}")
     # Prepare our data before we train the model
     preparedData = prepare_data(data, lexicon)
+    preparedData.to_csv('out.csv')
 
     # Define our feature columns
     feature_cols = ['pos_count', 'neg_count', 'contains_no', 'pron_count', 'contains_exclam', 'token_log']
@@ -154,7 +178,6 @@ def run_script(movie_reviews, sentiment_lexicon):
 
     # Read the sentiment lexicon (Sheet 'WKWSCI sentiment lexicon no POS') as a dataframe
     sentimentLexiconDF = pd.read_excel(sentiment_lexicon, sheet_name='WKWSCI sentiment lexicon no POS')
-
     # Train our Regression Model and get its accuracy
     LRmodelAccuracy = evaluate_LRModel(movieReviewsDF, sentimentLexiconDF)
 
