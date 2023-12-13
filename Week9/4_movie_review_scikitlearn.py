@@ -39,6 +39,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from nltk.tokenize import word_tokenize
+from pandarallel import pandarallel
 import pandas as pd
 import math
 import re
@@ -90,12 +91,19 @@ def prepare_data(data:pd.DataFrame, lexicon:pd.DataFrame):
     # The values get calculated by the applied function
     # apply() maps a function to all the members of the vector (the pd.Series object)
 
-    # This takes around 2-3 Minutes on my hardware
-    data['pos_count'] = data['review'].apply(count_sentiments, args=(positiveWords,))
-    # This takes around 4-5 Minutes on my hardware
-    data['neg_count'] = data['review'].apply(count_sentiments, args=(negativeWords,))
+    # Then next two steps are parallelized - They open two parallel processes that work at the same time (on 2 CPU cores)
+    # I used the pandarallel library (https://pypi.org/project/pandarallel/)
+    # This improves the runtime from ~8 to ~5 Minutes
+    pandarallel.initialize()
+    data['pos_count'] = data['review'].parallel_apply(count_sentiments, args=(positiveWords,))
+    data['neg_count'] = data['review'].parallel_apply(count_sentiments, args=(negativeWords,))
+
+    # Create a list of pronouns to give to the next function
+    pronounList = []
+    data['pron_count'] = data['review'].apply(count_pronouns, args=(pronounList,))
+
+    # The rest of the functions don't need any external parameters
     data['contains_no'] = data['review'].apply(determine_contains_no)
-    data['pron_count'] = data['review'].apply(count_pronouns)
     data['contains_exclam'] = data['review'].apply(determine_contains_exclam)
     data['token_log'] = data['review'].apply(count_tokens)
 
@@ -103,6 +111,7 @@ def prepare_data(data:pd.DataFrame, lexicon:pd.DataFrame):
 
 def count_sentiments(document, words):
     """Counts all positive sentiment word occurences in the document"""
+    import re
     # Regex magic (courtesy of https://stackoverflow.com/questions/60129620/finding-all-occurrences-of-a-list-of-words-in-a-text-using-regex-by-trying-to-jo)
     sentimentSum = len(re.findall(r'\b(?:' + '|'.join(words) + r')\b', document))
 
@@ -137,8 +146,6 @@ def evaluate_LRModel(data, lexicon):
     Evaluates a Linear Regression Model using the given dataframe\\
     Returns the accuracy of the trained LRModel
     """
-    t0 = time.time()
-    print(f"Begin @{t0}")
     # Prepare our data before we train the model
     preparedData = prepare_data(data, lexicon)
     preparedData.to_csv('out.csv')
