@@ -43,7 +43,6 @@ from pandarallel import pandarallel
 import pandas as pd
 import math
 import re
-import time
 
 ################################
 # Funktionen
@@ -91,17 +90,21 @@ def prepare_data(data:pd.DataFrame, lexicon:pd.DataFrame):
     # The values get calculated by the applied function
     # apply() maps a function to all the members of the vector (the pd.Series object)
 
-    # Then next two steps are parallelized - They open two parallel processes that work at the same time (on 2 CPU cores)
+    # Then next two steps are parallelized - They open multiple parallel processes that work at the same time (on all CPU cores)
     # I used the pandarallel library (https://pypi.org/project/pandarallel/)
-    # This improves the runtime from ~8 to ~5 Minutes
+    # This improves the runtime from ~8 to 2 Minutes (on 4 cores; ~5 Minutes on 2 cores)
     pandarallel.initialize()
     data['pos_count'] = data['review'].parallel_apply(count_sentiments, args=(positiveWords,))
     data['neg_count'] = data['review'].parallel_apply(count_sentiments, args=(negativeWords,))
-
-    # Create a list of pronouns to give to the next function
-    pronounList = []
+    #data['pos_count'] = data['review'].apply(count_sentiments, args=(positiveWords,))
+    #data['neg_count'] = data['review'].apply(count_sentiments, args=(negativeWords,))
+    
+    # Create a list of pronouns to give to the next function (1. and 2. Person, Singular and Plural)
+    pronounList = ["I", "Me", "me", "Mine", "mine", "My", "my", "Myself", "myself",
+                   "You", "you", "Your", "your", "Yours", "yours", "Yourself", "yourself",
+                   "We", "we", "Us", "us", "Our", "our", "Ours", "ours", "Ourselves", "ourselves"]
     data['pron_count'] = data['review'].apply(count_pronouns, args=(pronounList,))
-
+    
     # The rest of the functions don't need any external parameters
     data['contains_no'] = data['review'].apply(determine_contains_no)
     data['contains_exclam'] = data['review'].apply(determine_contains_exclam)
@@ -127,10 +130,12 @@ def determine_contains_no(document):
         else: return 0
 
 
-def count_pronouns(document):
+def count_pronouns(document, pronouns):
     """Counts all occurences of 1st and 2nd Person pronouns in the document"""
 
-    ...
+    pronounSum = len(re.findall(r'\b(?:' + '|'.join(pronouns) + r')\b', document))
+
+    return pronounSum
 
 def determine_contains_exclam(document):
     """Checks if the document contains the string '!'"""
@@ -148,7 +153,7 @@ def evaluate_LRModel(data, lexicon):
     """
     # Prepare our data before we train the model
     preparedData = prepare_data(data, lexicon)
-    preparedData.to_csv('out.csv')
+    # preparedData.to_csv('out.csv')
 
     # Define our feature columns
     feature_cols = ['pos_count', 'neg_count', 'contains_no', 'pron_count', 'contains_exclam', 'token_log']
@@ -178,15 +183,18 @@ def run_script(movie_reviews, sentiment_lexicon):
     """
     # Read the movie reviews as a dataFrame
     movieReviewsDF = pd.read_csv(movie_reviews)
-
+    print("Starting NB Analysis")
     # # Train our NB Model and get its accuracy
-    # NBModelAccuracy = evaluate_NBModel(movieReviewsDF)
-    # print(f"NBModel Accuracy is: {NBModelAccuracy*100}%")
-
+    NBModelAccuracy = evaluate_NBModel(movieReviewsDF)
+    print("NB Analysis Ended")
+    print("Starting LR Analysis")
     # Read the sentiment lexicon (Sheet 'WKWSCI sentiment lexicon no POS') as a dataframe
     sentimentLexiconDF = pd.read_excel(sentiment_lexicon, sheet_name='WKWSCI sentiment lexicon no POS')
     # Train our Regression Model and get its accuracy
     LRmodelAccuracy = evaluate_LRModel(movieReviewsDF, sentimentLexiconDF)
+    print("LR Analysis Ended")
+    print(f"NBModel Accuracy is: {NBModelAccuracy*100}%")
+    print(f"LRmodel Accuracy is: {LRmodelAccuracy*100}%")
 
 ################################
 # Hauptprogramm
