@@ -109,43 +109,57 @@ class LRModel():
         self.bias = 0
         
     
-    # Fit the model
-    def fit(self):
-        """Trains the model, given two parallel lists of training documents and training categories"""
+    # Fit the model and evaluate it at the end
+    def fit_and_evaluate(self):
+        """Trains the model and evaluates it at the beginning and end"""
         print(f"Initial theta: {self.theta}\nInitial bias: {self.bias}\n")
-
+        # Go through all documents
         for idx, doc in enumerate(self.docsTrain):
+            # Compute the loss gradient
             lossGradient = self.compute_gradient(doc, self.yTrain[idx])
+            # Then compute the new weights and bias
             self.compute_new_theta(lossGradient)
+            # Evaluate the model on the first and last pass
             if idx in [0,(len(self.docsTrain)-1)]:
                 self.evaluate_model(idx)
 
-
     def compute_gradient(self, doc, cat):
+        """Computes the gradient for the given document using the training classes"""
         # Compute estimated y value
         yHat = self.compute_y_hat(doc)
+        # Compute loss gradient component for each feature
         gradient = [(yHat-cat)*x for x in doc]
+        # The last component is the bias
         gradient.append(yHat-cat)
 
         return gradient
 
     def compute_y_hat(self, doc):
+        """Computes the estimated y value for the given document with the current weights and bias"""
         # Multiply each weight with the corresponding feature and sum the results
         # Then add the bias at the end
         zValue = sum(map(lambda w, x: w*x, self.theta, doc)) + self.bias
+        # Then plug the z-Value into the sigmoid function
         yHat = 1/(1+math.exp(-zValue))
 
         return yHat
         
     def compute_new_theta(self, gradient):
+        """Compute and set the new weights and bias"""
+        # Learning rate
         eta = 0.1
+        # For each weight substract the corresponding gradient value multiplied with eta
         self.theta = list(map(lambda w, g: w - (eta*g), self.theta, gradient[:-1]))
+        # Do the same for the bias, using the last value of the gradient
         self.bias = self.bias - (eta*gradient[-1])
 
     def evaluate_model(self, idx):
+        """Predicts categories for the test set and then evaluates the model based on the given test categories\\
+        Prints out the evaluation results"""
         testCats = self.predict_test_categories()
         trueP, trueN, falseP, falseN = self.compute_confusion_matrix(testCats)
         accuracy, precision, recall, fMeasure = self.compute_evaluations(trueP, trueN, falseP, falseN)
+        # Print out the results
         print("-----------------------------------------------------------------------------")
         if (idx == 0):
             print("Initiales Ergebnis")
@@ -156,31 +170,44 @@ class LRModel():
         print(f"FP: {falseP}")
         print(f"FN: {falseN}")
         print(f"ACCURACY: {round(accuracy,3)}")
+        if precision != 0: print(f"PRECISION: {round(precision,3)}")
+        if recall != 0:print(f"RECALL: {round(recall,3)}")
+        if fMeasure != 0:print(f"F-MEASURE: {round(fMeasure,3)}")
         print(f"THETA: {self.theta, self.bias}")
         print("-----------------------------------------------------------------------------\n\n")
 
     def predict_test_categories(self):
+        """Computes the predicted y values for all test documents and returns a list of predcited categories (1 or 0)"""
         yHats = [self.compute_y_hat(doc) for doc in self.docsTest]
-        return [1 if yHat >= 0.5 else 0 for yHat in yHats]
+        # Predicted y values above 0.5 count as positive
+        return [1 if yHat > 0.5 else 0 for yHat in yHats]
     
     def compute_confusion_matrix(self, predicted):
+        """Receives a list of predicted values and returns a confusion matrix of\\
+        TP, TN, FP, FN (in this order)"""
         TP, FP, TN, FN = 0,0,0,0
+        # There's probably a more elegant way to do this, but it works
         for (idx, item) in enumerate(predicted):
+            # Positive prediction can either be true or false (compared to gold standard)
             if item == 1:
                 if item == self.yTest[idx]: TP += 1  
                 else: FP += 1
+            # Same goes for negative predictions
             elif item == 0:
                 if item == self.yTest[idx]: TN += 1  
                 else: FN += 1
         return (TP, TN, FP, FN)
     
     def compute_evaluations(self, TP, TN, FP, FN):
+        """Receives the confusion matrix as input (TP, TN, FP, FN)\\
+        Returns the four evaluation measures - accuracy, precision, recall and f1 (in this order)"""
         all = TP + TN + FP + FN
-        #Accuracy = correct / all
+        # Accuracy = correct / all
         accuracy = (TP + TN)/all
-        #Precision = true positive / all system positives
+        # Precision = true positive / all system positives
         try:
             precision = TP / (TP + FP)
+        # Catch an error if there are no positive predictions
         except ZeroDivisionError:
             precision = 0
         #Recall = true positive / all gold positives
@@ -189,6 +216,7 @@ class LRModel():
         beta = 1
         try:
             f1 = (((beta*beta)+1)*precision*recall)/(((beta*beta)*precision) + recall)
+        # Catch an error if both precision and recall are 0
         except ZeroDivisionError:
             f1 = 0
         
@@ -246,6 +274,7 @@ def train_test_split(featureCols, data, trainSize):
             # Do the same as above, but for the test documents and categories
             docsTest.append([])
             for feature in featureCols:
+                # Note to self: Don't mess up the indeces next time to avoid spamming Marco
                 docsTest[idx-trainSize].append(entry[1][feature])
             yTest.append(entry[1]['category'])
 
@@ -265,7 +294,7 @@ def run_script(data_file):
 
     # Create the LR Model and train it
     RegressionModel = LRModel(docsTrain, docsTest, yTrain, yTest)
-    RegressionModel.fit()
+    RegressionModel.fit_and_evaluate()
 
     
 
