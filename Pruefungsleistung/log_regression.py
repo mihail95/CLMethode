@@ -89,20 +89,184 @@ ACCURACY: 0.569
 
 """
 
+import math
+
+###############################
+# Classes
+###############################
+
+class LRModel():
+    # Construct the Linear Regression Model
+    def __init__(self, docsTrain, docsTest, yTrain, yTest):
+        # Training and Test Documants and Categories
+        self.docsTrain = docsTrain
+        self.docsTest = docsTest
+        self.yTrain = yTrain
+        self.yTest = yTest
+        # Weight vector (1xf)
+        self.theta = [0 for _ in range(len(self.docsTrain[0]))]
+        # Bias 
+        self.bias = 0
+        
+    
+    # Fit the model
+    def fit(self):
+        """Trains the model, given two parallel lists of training documents and training categories"""
+        print(f"Initial theta: {self.theta}\nInitial bias: {self.bias}\n")
+
+        for idx, doc in enumerate(self.docsTrain):
+            lossGradient = self.compute_gradient(doc, self.yTrain[idx])
+            self.compute_new_theta(lossGradient)
+            if idx in [0,(len(self.docsTrain)-1)]:
+                self.evaluate_model(idx)
+
+
+    def compute_gradient(self, doc, cat):
+        # Compute estimated y value
+        yHat = self.compute_y_hat(doc)
+        gradient = [(yHat-cat)*x for x in doc]
+        gradient.append(yHat-cat)
+
+        return gradient
+
+    def compute_y_hat(self, doc):
+        # Multiply each weight with the corresponding feature and sum the results
+        # Then add the bias at the end
+        zValue = sum(map(lambda w, x: w*x, self.theta, doc)) + self.bias
+        yHat = 1/(1+math.exp(-zValue))
+
+        return yHat
+        
+    def compute_new_theta(self, gradient):
+        eta = 0.1
+        self.theta = list(map(lambda w, g: w - (eta*g), self.theta, gradient[:-1]))
+        self.bias = self.bias - (eta*gradient[-1])
+
+    def evaluate_model(self, idx):
+        testCats = self.predict_test_categories()
+        trueP, trueN, falseP, falseN = self.compute_confusion_matrix(testCats)
+        accuracy, precision, recall, fMeasure = self.compute_evaluations(trueP, trueN, falseP, falseN)
+        print("-----------------------------------------------------------------------------")
+        if (idx == 0):
+            print("Initiales Ergebnis")
+        elif (idx == len(self.docsTrain)-1):
+            print("Finales Ergebnis")
+        print(f"TP: {trueP}")
+        print(f"TN: {trueN}")
+        print(f"FP: {falseP}")
+        print(f"FN: {falseN}")
+        print(f"ACCURACY: {round(accuracy,3)}")
+        print(f"THETA: {self.theta, self.bias}")
+        print("-----------------------------------------------------------------------------\n\n")
+
+    def predict_test_categories(self):
+        yHats = [self.compute_y_hat(doc) for doc in self.docsTest]
+        return [1 if yHat >= 0.5 else 0 for yHat in yHats]
+    
+    def compute_confusion_matrix(self, predicted):
+        TP, FP, TN, FN = 0,0,0,0
+        for (idx, item) in enumerate(predicted):
+            if item == 1:
+                if item == self.yTest[idx]: TP += 1  
+                else: FP += 1
+            elif item == 0:
+                if item == self.yTest[idx]: TN += 1  
+                else: FN += 1
+        return (TP, TN, FP, FN)
+    
+    def compute_evaluations(self, TP, TN, FP, FN):
+        all = TP + TN + FP + FN
+        #Accuracy = correct / all
+        accuracy = (TP + TN)/all
+        #Precision = true positive / all system positives
+        try:
+            precision = TP / (TP + FP)
+        except ZeroDivisionError:
+            precision = 0
+        #Recall = true positive / all gold positives
+        recall = TP / (TP + FN)
+        #F1-Score
+        beta = 1
+        try:
+            f1 = (((beta*beta)+1)*precision*recall)/(((beta*beta)*precision) + recall)
+        except ZeroDivisionError:
+            f1 = 0
+        
+        return accuracy, precision, recall, f1
 
 
 ################################
 # Funktionen
 ################################
 
+def read_data(file):
+    """Read out data from a text file with the following columns\\
+    [0] = word, [1] = starts_with_vowel, [2] = charlen (Anzahl Buchstaben),
+    [3] = logfreq (logarithmierte Frequenz), [4] = category\\
+    Returns a dictionary of words as keys and the features as values (in a dictionary)"""
 
+    # Create an empty dictionary to fill
+    stopwordDict = {} 
+
+    # Open the input file and read out the contents - the dictionary keys are specific for the data set provided
+    # This must be modified if the data set changes
+    with open(file, encoding='utf-8', mode='r') as inputFile:
+        for line in inputFile:
+            lineList = line.strip().split(',')
+            stopwordDict[lineList[0]] = {
+                'vowelStart' : float(lineList[1]),
+                'charlen' : float(lineList[2]),
+                'logfreq': float(lineList[3]),
+                'category': 1 if lineList[4] == 'stopword' else 0
+            }
+    return stopwordDict
+
+def train_test_split(featureCols, data, trainSize):
+    """Splits the given data into a training and a test set\\
+    The set size (of the training set) is decided by the trainSet parameter\\
+    Returns 4 lists - documents and classifications for both sets, only containing the predefined feature columns"""
+
+    # Create our empty return lists
+    docsTrain = []
+    docsTest = []
+    yTrain = []
+    yTest = []
+
+    # Itterate over the raw data set and split it into training and test data
+    for idx, entry in enumerate(data.items()):
+        if (idx < trainSize):
+            # Append an empty feature array in the training documents
+            docsTrain.append([])
+            for feature in featureCols:
+                # Append each feature into the empty feature array
+                docsTrain[idx].append(entry[1][feature])
+            # Append the category into the parallel list with the training categories
+            yTrain.append(entry[1]['category'])
+        else:
+            # Do the same as above, but for the test documents and categories
+            docsTest.append([])
+            for feature in featureCols:
+                docsTest[idx-trainSize].append(entry[1][feature])
+            yTest.append(entry[1]['category'])
+
+    return (docsTrain, docsTest, yTrain, yTest)
 
 
 # Funktion, die alle weiteren Funktionen aufruft
 def run_script(data_file):
     """Funktion, die alle weiteren Funktionen aufruft"""
     
-    ...
+    # Read out the raw data
+    dataSet = read_data(data_file)
+    # Define the needed features
+    featureCols = ['charlen', 'logfreq']
+    # Split our training and test data (without randomization)
+    docsTrain, docsTest, yTrain, yTest = train_test_split(featureCols, dataSet, trainSize = 160)
+
+    # Create the LR Model and train it
+    RegressionModel = LRModel(docsTrain, docsTest, yTrain, yTest)
+    RegressionModel.fit()
+
     
 
 ################################
