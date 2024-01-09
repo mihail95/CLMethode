@@ -1,1 +1,4 @@
-Week10/data/cc.de.300.vec
+Week10/cc.de.300.vec
+*.model
+*.wordvectors
+
